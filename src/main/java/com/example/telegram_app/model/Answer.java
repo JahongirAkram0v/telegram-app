@@ -1,4 +1,5 @@
 package com.example.telegram_app.model;
 
-public record Answer() {
-}
+import java.util.Map;
+
+public record Answer(String method, Map<String, Object> body) {}
