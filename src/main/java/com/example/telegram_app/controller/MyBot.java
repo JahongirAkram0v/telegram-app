@@ -50,7 +50,9 @@ public class MyBot extends TelegramWebhookBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
 
             Message message = update.getMessage();
-            if (!botCommandService.isBotCommand(message.getText())) {
+            System.out.println("Message: " + message.getText() + "=");
+            if (!message.isCommand() && !botCommandService.isBotCommand(message.getText())) {
+                System.out.println("Message: Not a command or bot command " + message.getText());
                 return null;
             }
             Chat chat = message.getChat();

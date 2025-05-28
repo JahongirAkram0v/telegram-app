@@ -16,17 +16,23 @@ public class GroupService {
 
         System.out.println("Chat ID: " + chatMemberUpdated.getChat().getId());
         System.out.println(chatMemberUpdated.getNewChatMember().getStatus());
+
         //TODO: qolgan statuslarni ham tekshirish kerak
+        // TODO: sign up jarayonini yozish kerak guruh uchun
+        Long chatId = chatMemberUpdated.getChat().getId();
         if (chatMemberUpdated.getNewChatMember().getStatus().equals("member")) {
-            Long chatId = chatMemberUpdated.getChat().getId();
+            String text = "Welcome to the group!";
+            answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(chatId, text));
 
-            answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(chatId, "member"));
         } else if (chatMemberUpdated.getNewChatMember().getStatus().equals("administrator")) {
-            Long chatId = chatMemberUpdated.getChat().getId();
+            String text = "You are now an administrator of the group!";
+            answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(chatId, text));
 
-            answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(chatId, "administrator"));
         } else if (chatMemberUpdated.getNewChatMember().getStatus().equals("left")) {
-            System.out.println("User left the group: " + chatMemberUpdated.getNewChatMember().getUser().getId());
+
+            System.out.println(
+                    "User left the group: " + chatMemberUpdated.getNewChatMember().getUser().getId()
+            );
         }
     }
 

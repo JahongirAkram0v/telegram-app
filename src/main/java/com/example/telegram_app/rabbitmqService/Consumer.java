@@ -32,12 +32,12 @@ public class Consumer {
 
     @RabbitListener(queues = CALLBACK_QUEUE_CHAT)
     public void callbackChat(CallbackQuery callbackQuery) {
-
+        System.out.println("CallbackQuery from chat: " + callbackQuery.getData());
     }
 
     @RabbitListener(queues = CALLBACK_QUEUE_GROUP)
     public void callbackGroup(CallbackQuery callbackQuery) {
-
+        System.out.println("CallbackQuery from group: " + callbackQuery.getData());
     }
 
     @RabbitListener(queues = GROUP_QUEUE)

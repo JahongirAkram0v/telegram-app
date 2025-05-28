@@ -1,12 +1,10 @@
 package com.example.telegram_app.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,5 +15,11 @@ public class Player {
     private Long chatId;
 
     @Enumerated(value = EnumType.STRING)
-    private UserState userState = UserState.SING_UP;
+    private UserState userState = UserState.SIGN_UP;
+    private Long choosePlayerId;
+    private Boolean isActive = false;
+    //
+    @ManyToOne
+    @JoinColumn(name = "group_id")
+    private Groups groups;
 }

@@ -17,7 +17,7 @@ public class BotCommandService {
     );
 
     public boolean isBotCommand(String text) {
-        return botCommand.stream().anyMatch(command -> command.equals(text) || (command+"@"+botUsername).equals(text));
+        return botCommand.stream().anyMatch(command -> command.startsWith(text));
     }
 
 }
