@@ -13,6 +13,7 @@ public class Player {
 
     @Id
     private Long chatId;
+    private int languageCode = 0; // 0 - en, 1 - uz, 2 - ru
 
     @Enumerated(value = EnumType.STRING)
     private UserState userState = UserState.SIGN_UP;

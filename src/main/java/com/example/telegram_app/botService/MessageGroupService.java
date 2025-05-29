@@ -27,7 +27,7 @@ public class MessageGroupService {
         String text = message.getText();
 
         Groups groups = groupsService.findByGroupId(groupId);
-
+        // todo ; buni groupga ko'chirishim kerak
         if (groups.getGroupId() == null) {
             groups.setGroupId(groupId);
             groupsService.save(groups);
@@ -39,10 +39,10 @@ public class MessageGroupService {
                             "text", "Play",
                             "url", "https://t.me/" + telegramBotUsername + "?start=" + groups.getGroupId()))
             );
-
+            String responseText = "salom";
             answerProducer.answer(
                    rabbitQueue,
-                   messageUtilService.sendMessage(groupId, "play a game! @\uD83C\uDF11", response)
+                   messageUtilService.sendMessage(groupId, responseText, response)
             );
         }
     }

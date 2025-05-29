@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -17,6 +16,7 @@ public class Groups {
 
     @Id
     private Long groupId;
+    private int languageCode = 0; // 0 - en, 1 - uz, 2 - ru
 
     @OneToMany(mappedBy = "groups", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderColumn(name = "player_index")
