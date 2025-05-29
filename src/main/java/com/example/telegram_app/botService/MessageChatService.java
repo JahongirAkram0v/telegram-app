@@ -74,8 +74,7 @@ public class MessageChatService {
                     return;
                 }
                 player.setGroups(groups);
-                player.setUserState(JOINED);
-                playerService.save(player);
+                initializePlayer(rabbitQueue, player, chatId, JOINED);
 
                 handleGroupJoin(-1 * groupId, chatId, firstName);
                 return;
