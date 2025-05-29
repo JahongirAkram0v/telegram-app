@@ -2,6 +2,7 @@ package com.example.telegram_app.botService;
 
 import com.example.telegram_app.model.Groups;
 import com.example.telegram_app.model.Player;
+import com.example.telegram_app.model.UserState;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
 import com.example.telegram_app.service.GroupsService;
 import com.example.telegram_app.service.PlayerService;
@@ -12,6 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import java.util.List;
 import java.util.Map;
 
+import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_CHAT;
 import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_GROUP;
 import static com.example.telegram_app.model.UserState.*;
 
@@ -39,26 +41,22 @@ public class MessageChatService {
             if (temp.matches("\\d+")) {
                 long groupId = Long.parseLong(temp);
                 Groups groups = groupsService.findByGroupId(-1 * groupId);
-                if (groups == null || groups.getGroupId() == null) {
+                if (groups.getGroupId() == null) {
                     System.out.println("Group not found with ID: -" + groupId);
+                    initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
                     return;
                 }
-                player.setChatId(chatId);
                 player.setGroups(groups);
-                player.setUserState(LINK_LANGUAGE);
-                playerService.save(player);
-
-            } else System.out.println("Invalid group ID format: " + temp);
-            forLanguage(rabbitQueue, chatId);
+                initializePlayer(rabbitQueue, player, chatId, LINK_LANGUAGE);
+            } else {
+                System.out.println("Invalid group ID format: " + temp);
+                initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
+            }
             return;
         }
 
-        // TODO: tilni keyinroq qoshaman
         if (player.getUserState().equals(SIGN_UP)) {
-            player.setChatId(chatId);
-            player.setUserState(LANGUAGE);
-            playerService.save(player);
-            forLanguage(rabbitQueue, chatId);
+            initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
             return;
         }
 
@@ -75,21 +73,12 @@ public class MessageChatService {
                     System.out.println("Group not found with ID: -" + groupId);
                     return;
                 }
-                player.setChatId(chatId);
                 player.setGroups(groups);
                 player.setUserState(JOINED);
                 playerService.save(player);
 
-                String response = "You have successfully joined the group with ID: " + groups.getGroupId();
-                answerProducer.answer(
-                        ANSWER_QUEUE_GROUP,
-                        messageUtilService.sendMessage(chatId, response)
-                );
-                String groupResponse = firstName + " has joined";
-                answerProducer.answer(
-                        rabbitQueue,
-                        messageUtilService.sendMessage(groups.getGroupId(), groupResponse)
-                );
+                handleGroupJoin(-1 * groupId, chatId, firstName);
+                return;
 
             } else System.out.println("Invalid group ID format: " + temp);
         }
@@ -102,6 +91,26 @@ public class MessageChatService {
         if (text.equals("/info")) {
             botCommandService.forInfoCommand(rabbitQueue, chatId);
         }
+    }
+
+    public void handleGroupJoin(Long groupId, Long chatId, String firstName) {
+        String response = "You have successfully joined the group with ID: " + groupId;
+        answerProducer.answer(
+                ANSWER_QUEUE_CHAT,
+                messageUtilService.sendMessage(chatId, response)
+        );
+        String groupResponse = firstName + " has joined";
+        answerProducer.answer(
+                ANSWER_QUEUE_GROUP,
+                messageUtilService.sendMessage(groupId, groupResponse)
+        );
+    }
+
+    private void initializePlayer(String rabbitQueue, Player player, Long chatId, UserState userState) {
+        player.setChatId(chatId);
+        player.setUserState(userState);
+        playerService.save(player);
+        forLanguage(rabbitQueue, chatId);
     }
 
     private void forLanguage(String rabbitQueue, Long chatId) {
