@@ -83,12 +83,12 @@ public class MessageChatService {
         }
 
         if (text.equals("/start")) {
-            botCommandService.forStartCommand(rabbitQueue, chatId);
+            botCommandService.StartCommandChat(rabbitQueue, chatId);
             return;
         }
 
         if (text.equals("/info")) {
-            botCommandService.forInfoCommand(rabbitQueue, chatId);
+            botCommandService.InfoCommandChat(rabbitQueue, chatId);
         }
     }
 
@@ -112,7 +112,7 @@ public class MessageChatService {
         forLanguage(rabbitQueue, chatId);
     }
 
-    private void forLanguage(String rabbitQueue, Long chatId) {
+    public void forLanguage(String rabbitQueue, Long chatId) {
         String response = "Choose a language";
         List<List<Map<String, Object>>> responseButtons = List.of(
                 List.of(Map.of("text", "\uD83C\uDDFA\uD83C\uDDF8", "callback_data", "0"))

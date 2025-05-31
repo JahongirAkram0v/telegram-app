@@ -22,11 +22,12 @@ public class BotCommandService {
             "/start", "/info"
     );
 
+    // TODO: bot commadasini aniqlashda kamchiliklar bor
     public boolean isBotCommand(String text) {
         return botCommand.stream().anyMatch(command -> command.startsWith(text));
     }
 
-    public void forStartCommand(String rabbitQueue, Long chatId) {
+    public void StartCommandChat(String rabbitQueue, Long chatId) {
         String res = """
                 Welcome to the game!\s
                 To start playing, please add the bot to your groups and make it an admin.\s
@@ -44,7 +45,7 @@ public class BotCommandService {
         );
     }
 
-    public void forInfoCommand(String rabbitQueue, Long chatId) {
+    public void InfoCommandChat(String rabbitQueue, Long chatId) {
         String res = """
                     This is a game bot that allows you to play various games with your friends in a groups chat.\s
                     To start playing, please add the bot to your groups and make it an admin.\s
@@ -52,6 +53,28 @@ public class BotCommandService {
         answerProducer.answer(
                 rabbitQueue,
                 messageUtilService.sendMessage(chatId, res)
+        );
+    }
+
+    public void StartCommandGroup(String rabbitQueue, Long groupId) {
+        List<List<Map<String, Object>>> response = List.of(
+                List.of(Map.of(
+                        "text", "Play",
+                        "url", "https://t.me/" + telegramBotUsername + "?start=" + groupId))
+        );
+        String responseText = "salom";
+        answerProducer.answer(
+                rabbitQueue,
+                messageUtilService.sendMessage(groupId, responseText, response)
+        );
+    }
+
+    public void InfoCommandGroup(String rabbitQueue, Long groupId) {
+        String res = """
+                    dad""";
+        answerProducer.answer(
+                rabbitQueue,
+                messageUtilService.sendMessage(groupId, res)
         );
     }
 
