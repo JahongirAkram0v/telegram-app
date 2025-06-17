@@ -1,8 +1,6 @@
 package com.example.telegram_app.rabbitmqService;
 
-import com.example.telegram_app.botService.GroupService;
-import com.example.telegram_app.botService.MessageChatService;
-import com.example.telegram_app.botService.MessageGroupService;
+import com.example.telegram_app.botService.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
@@ -19,6 +17,8 @@ public class Consumer {
     private final MessageChatService messageChatService;
     private final MessageGroupService messageGroupService;
     private final GroupService groupService;
+    private final CallbackQueryChatService callbackQueryChatService;
+    private final CallbackQueryGroupService callbackQueryGroupService;
 
     @RabbitListener(queues = MESSAGE_QUEUE_CHAT)
     public void messageChat(Message message) {
@@ -32,12 +32,12 @@ public class Consumer {
 
     @RabbitListener(queues = CALLBACK_QUEUE_CHAT)
     public void callbackChat(CallbackQuery callbackQuery) {
-        System.out.println("CallbackQuery from chat: " + callbackQuery.getData());
+        callbackQueryChatService.callbackChat(ANSWER_QUEUE_CHAT, callbackQuery);
     }
 
     @RabbitListener(queues = CALLBACK_QUEUE_GROUP)
     public void callbackGroup(CallbackQuery callbackQuery) {
-        System.out.println("CallbackQuery from group: " + callbackQuery.getData());
+        callbackQueryGroupService.callbackGroup(ANSWER_QUEUE_GROUP, callbackQuery);
     }
 
     @RabbitListener(queues = GROUP_QUEUE)

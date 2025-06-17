@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_CHAT;
+
 @Service
 @RequiredArgsConstructor
 public class BotCommandService {
@@ -27,7 +29,7 @@ public class BotCommandService {
         return botCommand.stream().anyMatch(command -> command.startsWith(text));
     }
 
-    public void StartCommandChat(String rabbitQueue, Long chatId) {
+    public void StartCommandChat(Long chatId) {
         String res = """
                 Welcome to the game!\s
                 To start playing, please add the bot to your groups and make it an admin.\s
@@ -40,42 +42,37 @@ public class BotCommandService {
         );
 
         answerProducer.answer(
-                rabbitQueue,
+                ANSWER_QUEUE_CHAT,
                 messageUtilService.sendMessage(chatId, res, response)
         );
     }
 
-    public void InfoCommandChat(String rabbitQueue, Long chatId) {
+    public void StartCommandChat(Long chatId, Integer messageId) {
+        String res = """
+                Welcome to the game!\s
+                To start playing, please add the bot to your groups and make it an admin.\s
+                After that, you can start playing by sending the command /start.""";
+
+        List<List<Map<String, Object>>> response = List.of(
+                List.of(Map.of(
+                        "text", "Add Bot",
+                        "url", "https://t.me/" + telegramBotUsername + "?startgroup=true"))
+        );
+
+        answerProducer.answer(
+                ANSWER_QUEUE_CHAT,
+                messageUtilService.editMessageText(messageId, chatId, res, response)
+        );
+    }
+
+    public void InfoCommandChat(Long chatId) {
         String res = """
                     This is a game bot that allows you to play various games with your friends in a groups chat.\s
                     To start playing, please add the bot to your groups and make it an admin.\s
                     After that, you can start playing by sending the command /start.""";
         answerProducer.answer(
-                rabbitQueue,
+                ANSWER_QUEUE_CHAT,
                 messageUtilService.sendMessage(chatId, res)
         );
     }
-
-    public void StartCommandGroup(String rabbitQueue, Long groupId) {
-        List<List<Map<String, Object>>> response = List.of(
-                List.of(Map.of(
-                        "text", "Play",
-                        "url", "https://t.me/" + telegramBotUsername + "?start=" + groupId))
-        );
-        String responseText = "salom";
-        answerProducer.answer(
-                rabbitQueue,
-                messageUtilService.sendMessage(groupId, responseText, response)
-        );
-    }
-
-    public void InfoCommandGroup(String rabbitQueue, Long groupId) {
-        String res = """
-                    dad""";
-        answerProducer.answer(
-                rabbitQueue,
-                messageUtilService.sendMessage(groupId, res)
-        );
-    }
-
 }

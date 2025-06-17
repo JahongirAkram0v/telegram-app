@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.ChatMemberUpdated;
 
+import static com.example.telegram_app.model.GroupState.LANGUAGE;
+import static com.example.telegram_app.model.GroupState.SIGN_UP;
+
 @Service
 @RequiredArgsConstructor
 public class GroupService {
@@ -26,24 +29,27 @@ public class GroupService {
 
         //TODO: qolgan statuslarni ham tekshirish kerak
 
-        if (status.equals("member")) {
-            String text = "Meni admin!";
-            answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(groupId, text));
-
-        } else if (status.equals("administrator")) {
-
-            Groups groups = groupsService.findByGroupId(groupId);
-            if (groups.getGroupId() == null) {
-                groups.setGroupId(groupId);
-                groupsService.save(groups);
-                messageChatService.forLanguage(rabbitQueue, groupId);
-                return;
+        switch (status) {
+            case "member" -> {
+                Groups groups = groupsService.findByGroupId(groupId);
+                String text = "Make me an administrator to start the game!";
+                answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(groupId, text));
             }
-            String text = "You are now an administrator of the group!";
-            answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(groupId, text));
+            case "administrator" -> {
 
-        } else if (status.equals("kicked")){
-            System.out.println("User left the group: " + groupId);
+                Groups groups = groupsService.findByGroupId(groupId);
+                if (groups.getGroupState().equals(SIGN_UP)) {
+                    groups.setGroupId(groupId);
+                    groups.setGroupState(LANGUAGE);
+                    groupsService.save(groups);
+                    messageChatService.forLanguage(rabbitQueue, groupId);
+                    return;
+                }
+                String text = "O'yinni boshlash uchun /start ni bosing!";
+                answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(groupId, text));
+
+            }
+            case "kicked" -> System.out.println("User left the group: " + groupId);
         }
     }
 

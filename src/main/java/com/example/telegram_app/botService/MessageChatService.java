@@ -16,6 +16,7 @@ import java.util.Map;
 import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_CHAT;
 import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_GROUP;
 import static com.example.telegram_app.model.UserState.*;
+import static com.example.telegram_app.model.GroupState.JOIN;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +47,11 @@ public class MessageChatService {
                     initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
                     return;
                 }
+                if (!groups.getGroupState().equals(JOIN)) {
+                    System.out.println("Group is not in JOINED state: " + groups.getGroupState());
+                    initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
+                    return;
+                }
                 player.setGroups(groups);
                 initializePlayer(rabbitQueue, player, chatId, LINK_LANGUAGE);
             } else {
@@ -73,6 +79,11 @@ public class MessageChatService {
                     System.out.println("Group not found with ID: -" + groupId);
                     return;
                 }
+                if (!groups.getGroupState().equals(JOIN)) {
+                    System.out.println("Group is not in JOINED state: " + groups.getGroupState());
+                    initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
+                    return;
+                }
                 player.setGroups(groups);
                 initializePlayer(rabbitQueue, player, chatId, JOINED);
 
@@ -83,12 +94,12 @@ public class MessageChatService {
         }
 
         if (text.equals("/start")) {
-            botCommandService.StartCommandChat(rabbitQueue, chatId);
+            botCommandService.StartCommandChat(chatId);
             return;
         }
 
         if (text.equals("/info")) {
-            botCommandService.InfoCommandChat(rabbitQueue, chatId);
+            botCommandService.InfoCommandChat(chatId);
         }
     }
 

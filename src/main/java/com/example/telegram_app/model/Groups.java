@@ -18,6 +18,9 @@ public class Groups {
     private Long groupId;
     private int languageCode = 0; // 0 - en, 1 - uz, 2 - ru
 
+    @Enumerated(EnumType.STRING)
+    private GroupState groupState = GroupState.SIGN_UP;
+
     @OneToMany(mappedBy = "groups", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderColumn(name = "player_index")
     List<Player> players = new ArrayList<>();
