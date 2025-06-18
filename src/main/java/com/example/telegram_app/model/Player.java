@@ -3,6 +3,7 @@ package com.example.telegram_app.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+@ToString
 @Getter
 @Setter
 @Builder

@@ -36,8 +36,7 @@ public class MessageChatService {
         String text = message.getText();
 
         Optional<Player> optionalPlayer = playerService.findById(chatId);
-        if (optionalPlayer.isEmpty()) return;
-        Player player = optionalPlayer.get();
+        Player player = optionalPlayer.orElseGet(Player::new);
 
         // TODO: Link yoki referrallar uchun alohida class yarataman
         if (text.startsWith("/start -") && player.getUserState().equals(SIGN_UP)) {
@@ -58,12 +57,7 @@ public class MessageChatService {
                     initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
                     return;
                 }
-                List<Player> players = group.getPlayers();
-                players.add(player);
-                group.setPlayers(players);
-                groupsService.save(group);
-                player.setGroup(group);
-                playerService.save(player);
+                // TODO: oyinchilar umumiy korinmayapti!?
                 initializePlayer(rabbitQueue, player, chatId, LINK_LANGUAGE);
             } else {
                 System.out.println("Invalid group ID format: " + temp);
@@ -94,21 +88,13 @@ public class MessageChatService {
                 }
                 Group group = optionalGroup.get();
 
+
                 if (!group.getGroupState().equals(JOIN)) {
                     System.out.println("Group is not in JOINED state: " + group.getGroupState());
                     initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
                     return;
                 }
-                try {
-                    List<Player> players = group.getPlayers();
-                    players.add(player);
-                    group.setPlayers(players);
-                    groupsService.save(group);
-                    player.setGroup(group);
-                    playerService.save(player);
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                }
+                //TODO: bu yer ham
                 initializePlayer(rabbitQueue, player, chatId, JOINED);
 
                 handleGroupJoin(-1 * groupId, chatId, firstName);
@@ -147,7 +133,7 @@ public class MessageChatService {
         forLanguage(rabbitQueue, chatId);
     }
 
-    public void forLanguage(String rabbitQueue, Long chatId) {
+    private void forLanguage(String rabbitQueue, Long chatId) {
         String response = "Choose a language";
         List<List<Map<String, Object>>> responseButtons = List.of(
                 List.of(Map.of("text", "\uD83C\uDDFA\uD83C\uDDF8", "callback_data", "0"))
