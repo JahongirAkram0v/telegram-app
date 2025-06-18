@@ -32,7 +32,7 @@ public class BotCommandService {
     public void StartCommandChat(Long chatId) {
         String res = """
                 Welcome to the game!\s
-                To start playing, please add the bot to your groups and make it an admin.\s
+                To start playing, please add the bot to your group and make it an admin.\s
                 After that, you can start playing by sending the command /start.""";
 
         List<List<Map<String, Object>>> response = List.of(
@@ -50,7 +50,7 @@ public class BotCommandService {
     public void StartCommandChat(Long chatId, Integer messageId) {
         String res = """
                 Welcome to the game!\s
-                To start playing, please add the bot to your groups and make it an admin.\s
+                To start playing, please add the bot to your group and make it an admin.\s
                 After that, you can start playing by sending the command /start.""";
 
         List<List<Map<String, Object>>> response = List.of(
@@ -67,8 +67,8 @@ public class BotCommandService {
 
     public void InfoCommandChat(Long chatId) {
         String res = """
-                    This is a game bot that allows you to play various games with your friends in a groups chat.\s
-                    To start playing, please add the bot to your groups and make it an admin.\s
+                    This is a game bot that allows you to play various games with your friends in a group chat.\s
+                    To start playing, please add the bot to your group and make it an admin.\s
                     After that, you can start playing by sending the command /start.""";
         answerProducer.answer(
                 ANSWER_QUEUE_CHAT,

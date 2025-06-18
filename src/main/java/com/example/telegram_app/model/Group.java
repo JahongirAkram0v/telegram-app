@@ -11,8 +11,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity()
-public class Groups {
+@Entity(name = "_group")
+public class Group {
 
     @Id
     private Long groupId;
@@ -21,7 +21,7 @@ public class Groups {
     @Enumerated(EnumType.STRING)
     private GroupState groupState = GroupState.SIGN_UP;
 
-    @OneToMany(mappedBy = "groups", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderColumn(name = "player_index")
     List<Player> players = new ArrayList<>();
 }

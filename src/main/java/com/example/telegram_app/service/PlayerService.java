@@ -5,6 +5,8 @@ import com.example.telegram_app.repository.PlayerRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class PlayerService {
@@ -15,7 +17,7 @@ public class PlayerService {
         playerRepo.save(player);
     }
 
-    public Player findById(Long chatId) {
-        return playerRepo.findById(chatId).orElse(new Player());
+    public Optional<Player> findById(Long chatId) {
+        return playerRepo.findById(chatId);
     }
 }

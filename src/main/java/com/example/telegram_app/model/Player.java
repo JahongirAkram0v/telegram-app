@@ -22,5 +22,5 @@ public class Player {
     //
     @ManyToOne
     @JoinColumn(name = "group_id")
-    private Groups groups;
+    private Group group;
 }

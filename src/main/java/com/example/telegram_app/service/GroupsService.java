@@ -1,21 +1,23 @@
 package com.example.telegram_app.service;
 
-import com.example.telegram_app.model.Groups;
-import com.example.telegram_app.repository.GroupsRepo;
+import com.example.telegram_app.model.Group;
+import com.example.telegram_app.repository.GroupRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class GroupsService {
 
-    private final GroupsRepo groupRepo;
+    private final GroupRepo groupRepo;
 
-    public void save(Groups groups) {
-        groupRepo.save(groups);
+    public void save(Group group) {
+        groupRepo.save(group);
     }
 
-    public Groups findByGroupId(Long groupId) {
-        return groupRepo.findByGroupId(groupId).orElse(new Groups());
+    public Optional<Group> findByGroupId(Long groupId) {
+        return groupRepo.findById(groupId);
     }
 }

@@ -1,6 +1,6 @@
 package com.example.telegram_app.botService;
 
-import com.example.telegram_app.model.Groups;
+import com.example.telegram_app.model.Group;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
 import com.example.telegram_app.service.GroupsService;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_GROUP;
 import static com.example.telegram_app.model.GroupState.*;
@@ -28,16 +29,19 @@ public class MessageGroupService {
 
         Long groupId = message.getChat().getId();
         String text = message.getText();
-        Groups groups = groupsService.findByGroupId(groupId);
 
-        if (groups.getGroupState().equals(SIGN_UP) || groups.getGroupState().equals(LANGUAGE)) {
+        Optional<Group> optionalGroup = groupsService.findByGroupId(groupId);
+        if (optionalGroup.isEmpty()) return;
+        Group group = optionalGroup.get();
+
+        if (group.getGroupState().equals(SIGN_UP) || group.getGroupState().equals(LANGUAGE)) {
             return;
         }
 
-        if (groups.getGroupState().equals(START) && text.equals("/start@"+telegramBotUsername)) {
+        if (group.getGroupState().equals(START) && text.equals("/start@"+telegramBotUsername)) {
 
-            groups.setGroupState(JOIN);
-            groupsService.save(groups);
+            group.setGroupState(JOIN);
+            groupsService.save(group);
 
             List<List<Map<String, Object>>> response = List.of(
                     List.of(Map.of(
@@ -50,7 +54,7 @@ public class MessageGroupService {
                     messageUtilService.sendMessage(groupId, responseText, response)
             );
 
-        } else if (groups.getGroupState().equals(START) && text.equals("/info@"+telegramBotUsername)) {
+        } else if (group.getGroupState().equals(START) && text.equals("/info@"+telegramBotUsername)) {
 
             String res = """
                     dad""";

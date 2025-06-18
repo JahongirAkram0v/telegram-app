@@ -1,18 +1,20 @@
 package com.example.telegram_app.botService;
 
-import com.example.telegram_app.model.Groups;
+import com.example.telegram_app.model.Group;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
 import com.example.telegram_app.service.GroupsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.ChatMemberUpdated;
 
+import java.util.Optional;
+
 import static com.example.telegram_app.model.GroupState.LANGUAGE;
 import static com.example.telegram_app.model.GroupState.SIGN_UP;
 
 @Service
 @RequiredArgsConstructor
-public class GroupService {
+public class GService {
 
     private final MessageUtilService messageUtilService;
     private final AnswerProducer answerProducer;
@@ -31,17 +33,19 @@ public class GroupService {
 
         switch (status) {
             case "member" -> {
-                Groups groups = groupsService.findByGroupId(groupId);
                 String text = "Make me an administrator to start the game!";
                 answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(groupId, text));
             }
             case "administrator" -> {
 
-                Groups groups = groupsService.findByGroupId(groupId);
-                if (groups.getGroupState().equals(SIGN_UP)) {
-                    groups.setGroupId(groupId);
-                    groups.setGroupState(LANGUAGE);
-                    groupsService.save(groups);
+                Optional<Group> optionalGroup = groupsService.findByGroupId(groupId);
+                if (optionalGroup.isEmpty()) return;
+                Group group = optionalGroup.get();
+
+                if (group.getGroupState().equals(SIGN_UP)) {
+                    group.setGroupId(groupId);
+                    group.setGroupState(LANGUAGE);
+                    groupsService.save(group);
                     messageChatService.forLanguage(rabbitQueue, groupId);
                     return;
                 }

@@ -16,7 +16,7 @@ public class Consumer {
 
     private final MessageChatService messageChatService;
     private final MessageGroupService messageGroupService;
-    private final GroupService groupService;
+    private final GService gService;
     private final CallbackQueryChatService callbackQueryChatService;
     private final CallbackQueryGroupService callbackQueryGroupService;
 
@@ -42,6 +42,6 @@ public class Consumer {
 
     @RabbitListener(queues = GROUP_QUEUE)
     public void group(ChatMemberUpdated chatMemberUpdated) {
-        groupService.group(ANSWER_QUEUE_GROUP, chatMemberUpdated);
+        gService.group(ANSWER_QUEUE_GROUP, chatMemberUpdated);
     }
 }
