@@ -68,6 +68,7 @@ public class MessageChatService {
                     initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
                 }
             }
+            case JOINED -> webAppButton(rabbitQueue, chatId);
         }
     }
 
@@ -109,20 +110,23 @@ public class MessageChatService {
                 return;
             }
 
-            try {
-                if (state == SIGN_UP) {
-                    player.setChatId(chatId);
-                }
-                player.setGroup(group);
-                // TODO: keyinchalik kerakli tekshirishlar ishlataman
-                group.getPlayers().add(player);
-                groupsService.save(group);
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
+            if (state == SIGN_UP) {
+                player.setChatId(chatId);
             }
+            player.setUserState(JOINED);
+            player.setGroup(group);
+            // TODO: keyinchalik kerakli tekshirishlar ishlataman
+            group.getPlayers().add(player);
+            groupsService.save(group);
 
             if (state == START) {
-                handleGroupJoin(rabbitQueue, groupId, chatId, firstName);
+                webAppButton(rabbitQueue, chatId);
+
+                String groupResponse = firstName + " has joined";
+                answerProducer.answer(
+                        ANSWER_QUEUE_GROUP,
+                        messageUtilService.sendMessage(groupId, groupResponse)
+                );
             }
             if (state == SIGN_UP) {
                 initializePlayer(rabbitQueue, player, chatId, LINK_LANGUAGE);
@@ -136,16 +140,11 @@ public class MessageChatService {
 
     }
 
-    private void handleGroupJoin(String rabbitQueue, Long groupId, Long chatId, String firstName) {
-        String response = "You have successfully joined the group with ID: " + groupId;
+    private void webAppButton(String rabbitQueue, Long chatId) {
+        String response = "You have successfully joined the group";
         answerProducer.answer(
                 rabbitQueue,
                 messageUtilService.sendMessage(chatId, response)
-        );
-        String groupResponse = firstName + " has joined";
-        answerProducer.answer(
-                ANSWER_QUEUE_GROUP,
-                messageUtilService.sendMessage(groupId, groupResponse)
         );
     }
 
