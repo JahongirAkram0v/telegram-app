@@ -33,26 +33,31 @@ public class CallbackQueryChatService {
         Player player = optionalPlayer.get();
         UserState state = player.getUserState();
 
-        if (state.equals(LANGUAGE)) {
-            System.out.println("Language selection callback received: " + callbackData);
-            player.setUserState(START);
-            playerService.save(player);
-            botCommandService.StartCommandChat(chatId, messageId);
-        } else if (state.equals(LINK_LANGUAGE)) {
-            System.out.println("Link language selection callback received: " + callbackData);
-            player.setUserState(START);
-            playerService.save(player);
-            Long groupId = player.getGroup().getGroupId();
-            String response = "You have successfully joined the group with ID: " + groupId;
-            answerProducer.answer(
-                    rabbitQueue,
-                    messageUtilService.editMessageText(messageId, chatId, response)
-            );
-            String groupResponse = firstName + " has joined";
-            answerProducer.answer(
-                    ANSWER_QUEUE_GROUP,
-                    messageUtilService.sendMessage(groupId, groupResponse)
-            );
+        switch (state) {
+            case LANGUAGE -> {
+                System.out.println("Language selection callback received: " + callbackData);
+                player.setUserState(START);
+                playerService.save(player);
+                botCommandService.StartCommandChat(chatId, messageId);
+            }
+            case LINK_LANGUAGE -> {
+
+                System.out.println("Link language selection callback received: " + callbackData);
+                player.setUserState(START);
+                playerService.save(player);
+                System.out.println("tugadi");
+//                Long groupId = player.getGroup().getGroupId();
+//                String response = "You have successfully joined the group with ID: " + groupId;
+//                answerProducer.answer(
+//                        rabbitQueue,
+//                        messageUtilService.editMessageText(messageId, chatId, response)
+//                );
+//                String groupResponse = firstName + " has joined";
+//                answerProducer.answer(
+//                        ANSWER_QUEUE_GROUP,
+//                        messageUtilService.sendMessage(groupId, groupResponse)
+//                );
+            }
         }
     }
 }

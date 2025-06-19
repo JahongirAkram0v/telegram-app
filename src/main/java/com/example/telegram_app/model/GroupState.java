@@ -6,4 +6,5 @@ public enum GroupState {
     LANGUAGE,
     START,
     JOIN,
+    GAME,
 }

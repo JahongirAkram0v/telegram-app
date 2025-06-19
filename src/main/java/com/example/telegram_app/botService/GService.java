@@ -46,6 +46,7 @@ public class GService {
                     group.setGroupId(groupId);
                     group.setGroupState(LANGUAGE);
                     groupsService.save(group);
+
                     String response = "Choose a language";
                     List<List<Map<String, Object>>> responseButtons = List.of(
                             List.of(Map.of("text", "\uD83C\uDDFA\uD83C\uDDF8", "callback_data", "0"))
@@ -61,7 +62,7 @@ public class GService {
                 answerProducer.answer(rabbitQueue, messageUtilService.sendMessage(groupId, text));
 
             }
-            case "kicked" -> System.out.println("User left the group: " + groupId);
+            case "kicked", "left" -> System.out.println("User left the group: " + groupId);
         }
     }
 

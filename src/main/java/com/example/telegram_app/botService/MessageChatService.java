@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_CHAT;
 import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_GROUP;
 import static com.example.telegram_app.model.UserState.*;
 import static com.example.telegram_app.model.GroupState.JOIN;
@@ -43,7 +42,7 @@ public class MessageChatService {
             case SIGN_UP -> {
                 if (text.startsWith("/start -")) {
                     String temp = text.replace("/start -", "");
-                    CheckRefAndJoin(rabbitQueue, player, chatId, temp, state);
+                    CheckRefAndJoin(rabbitQueue, player, chatId, firstName, temp, state);
                 } else {
                     initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
                 }
@@ -51,7 +50,7 @@ public class MessageChatService {
             case START -> {
                 if (text.startsWith("/start -")) {
                     String temp = text.replace("/start -", "");
-                    CheckRefAndJoin(rabbitQueue, player, chatId, temp, state);
+                    CheckRefAndJoin(rabbitQueue, player, chatId, firstName, temp, state);
                 }
                 else if (text.equals("/start")) {
                     botCommandService.StartCommandChat(chatId);
@@ -60,10 +59,27 @@ public class MessageChatService {
                     botCommandService.InfoCommandChat(chatId);
                 }
             }
+            case LANGUAGE, LINK_LANGUAGE -> {
+                System.out.println("User is stupid" + chatId + " " + firstName);
+                if (text.startsWith("/start -")) {
+                    String temp = text.replace("/start -", "");
+                    CheckRefAndJoin(rabbitQueue, player, chatId, firstName, temp, SIGN_UP);
+                } else {
+                    initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
+                }
+            }
         }
     }
 
-    private void CheckRefAndJoin(String rabbitQueue, Player player, Long chatId, String temp, UserState state) {
+    private void CheckRefAndJoin(
+            String rabbitQueue, Player player, Long chatId, String firstName,
+            String temp, UserState state
+    ) {
+
+        if (state == LANGUAGE || state == LINK_LANGUAGE) {
+            initializePlayer(rabbitQueue, player, chatId, state);
+            return;
+        }
 
         if (state == START && player.getGroup() != null) {
             System.out.println("Player already linked to a group: " + player.getGroup().getGroupId());
@@ -94,21 +110,25 @@ public class MessageChatService {
             }
             // TODO: shu yerda group playerni bog'lashim kerak!!!
             //
+            if (state == START) {
+                handleGroupJoin(rabbitQueue, groupId, chatId, firstName);
+            }
             if (state == SIGN_UP) {
                 initializePlayer(rabbitQueue, player, chatId, LINK_LANGUAGE);
             }
         } else {
             System.out.println("Invalid group ID format: " + temp);
+            if (state == SIGN_UP) {
+                initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
+            }
         }
-        if (state == SIGN_UP) {
-            initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
-        }
+
     }
 
-    private void handleGroupJoin(Long groupId, Long chatId, String firstName) {
+    private void handleGroupJoin(String rabbitQueue, Long groupId, Long chatId, String firstName) {
         String response = "You have successfully joined the group with ID: " + groupId;
         answerProducer.answer(
-                ANSWER_QUEUE_CHAT,
+                rabbitQueue,
                 messageUtilService.sendMessage(chatId, response)
         );
         String groupResponse = firstName + " has joined";

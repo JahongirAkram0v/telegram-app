@@ -1,6 +1,7 @@
 package com.example.telegram_app.botService;
 
 import com.example.telegram_app.model.Group;
+import com.example.telegram_app.model.GroupState;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
 import com.example.telegram_app.service.GroupsService;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -12,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_GROUP;
 import static com.example.telegram_app.model.GroupState.*;
 
 @Service
@@ -31,38 +31,55 @@ public class MessageGroupService {
         String text = message.getText();
 
         Optional<Group> optionalGroup = groupsService.findByGroupId(groupId);
-        if (optionalGroup.isEmpty()) return;
+        if (optionalGroup.isEmpty()) {
+            System.out.println("ERROR!! --- Group not found for ID: " + groupId);
+            return;
+        }
         Group group = optionalGroup.get();
+        GroupState groupState = group.getGroupState();
 
-        if (group.getGroupState().equals(SIGN_UP) || group.getGroupState().equals(LANGUAGE)) {
+        if (groupState == SIGN_UP || groupState == LANGUAGE) {
             return;
         }
 
-        if (group.getGroupState().equals(START) && text.equals("/start@"+telegramBotUsername)) {
+        switch (groupState) {
+            case START -> {
+                if (text.startsWith("/start@")) {
+                    group.setGroupState(JOIN);
+                    groupsService.save(group);
 
-            group.setGroupState(JOIN);
-            groupsService.save(group);
+                    List<List<Map<String, Object>>> response = List.of(
+                            List.of(Map.of(
+                                    "text", "Play",
+                                    "url", "https://t.me/" + telegramBotUsername + "?start=" + groupId))
+                    );
+                    String responseText = "salom";
+                    answerProducer.answer(
+                            rabbitQueue,
+                            messageUtilService.sendMessage(groupId, responseText, response)
+                    );
+                }
+                else if (text.startsWith("/info@")) {
+                    String res = "dad";
+                    answerProducer.answer(
+                            rabbitQueue,
+                            messageUtilService.sendMessage(groupId, res)
+                    );
+                }
+            }
+            case JOIN -> {
+                if (text.startsWith("/start@")) {
+                    group.setGroupState(GAME);
+                    groupsService.save(group);
 
-            List<List<Map<String, Object>>> response = List.of(
-                    List.of(Map.of(
-                            "text", "Play",
-                            "url", "https://t.me/" + telegramBotUsername + "?start=" + groupId))
-            );
-            String responseText = "salom";
-            answerProducer.answer(
-                    ANSWER_QUEUE_GROUP,
-                    messageUtilService.sendMessage(groupId, responseText, response)
-            );
-
-        } else if (group.getGroupState().equals(START) && text.equals("/info@"+telegramBotUsername)) {
-
-            String res = """
-                    dad""";
-            answerProducer.answer(
-                    ANSWER_QUEUE_GROUP,
-                    messageUtilService.sendMessage(groupId, res)
-            );
-
+                    String res = "Oyin boshlandi!";
+                    answerProducer.answer(
+                            rabbitQueue,
+                            messageUtilService.sendMessage(groupId, res)
+                    );
+                }
+            }
         }
+
     }
 }
