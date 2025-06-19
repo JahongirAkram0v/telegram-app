@@ -22,7 +22,7 @@ public class Group {
     @Enumerated(EnumType.STRING)
     private GroupState groupState = GroupState.SIGN_UP;
 
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn(name = "player_index")
     List<Player> players = new ArrayList<>();
 }

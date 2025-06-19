@@ -108,8 +108,19 @@ public class MessageChatService {
                 }
                 return;
             }
-            // TODO: shu yerda group playerni bog'lashim kerak!!!
-            //
+
+            try {
+                if (state == SIGN_UP) {
+                    player.setChatId(chatId);
+                }
+                player.setGroup(group);
+                // TODO: keyinchalik kerakli tekshirishlar ishlataman
+                group.getPlayers().add(player);
+                groupsService.save(group);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+
             if (state == START) {
                 handleGroupJoin(rabbitQueue, groupId, chatId, firstName);
             }
