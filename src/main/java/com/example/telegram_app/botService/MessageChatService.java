@@ -37,79 +37,71 @@ public class MessageChatService {
 
         Optional<Player> optionalPlayer = playerService.findById(chatId);
         Player player = optionalPlayer.orElseGet(Player::new);
+        UserState state = player.getUserState();
 
-        // TODO: Link yoki referrallar uchun alohida class yarataman
-        if (text.startsWith("/start -") && player.getUserState().equals(SIGN_UP)) {
-            String temp = text.replace("/start -", "");
-            if (temp.matches("\\d+")) {
-                long groupId = Long.parseLong(temp);
-
-                Optional<Group> optionalGroup = groupsService.findByGroupId(-1 * groupId);
-                if (optionalGroup.isEmpty()) {
-                    System.out.println("Group not found with ID: -" + groupId);
+        switch (state) {
+            case SIGN_UP -> {
+                if (text.startsWith("/start -")) {
+                    String temp = text.replace("/start -", "");
+                    CheckRefAndJoin(rabbitQueue, player, chatId, temp, state);
+                } else {
                     initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
-                    return;
                 }
-                Group group = optionalGroup.get();
+            }
+            case START -> {
+                if (text.startsWith("/start -")) {
+                    String temp = text.replace("/start -", "");
+                    CheckRefAndJoin(rabbitQueue, player, chatId, temp, state);
+                }
+                else if (text.equals("/start")) {
+                    botCommandService.StartCommandChat(chatId);
+                }
+                else if (text.equals("/info")) {
+                    botCommandService.InfoCommandChat(chatId);
+                }
+            }
+        }
+    }
 
-                if (!group.getGroupState().equals(JOIN)) {
-                    System.out.println("Group is not in JOINED state: " + group.getGroupState());
+    private void CheckRefAndJoin(String rabbitQueue, Player player, Long chatId, String temp, UserState state) {
+
+        if (state == START && player.getGroup() != null) {
+            System.out.println("Player already linked to a group: " + player.getGroup().getGroupId());
+            return;
+        }
+
+        if (temp.matches("\\d+")) {
+            long groupId = -1 * Long.parseLong(temp);
+
+            Optional<Group> optionalGroup = groupsService.findByGroupId(groupId);
+            //TODO: userga xabar yuborsam ham boladi
+            if (optionalGroup.isEmpty()) {
+                System.out.println("Group not found with ID: " + groupId);
+                if (state == SIGN_UP) {
                     initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
-                    return;
                 }
-                // TODO: oyinchilar umumiy korinmayapti!?
+                return;
+            }
+            Group group = optionalGroup.get();
+
+            //TODO: userga xabar yuborsam ham boladi
+            if (!group.getGroupState().equals(JOIN)) {
+                System.out.println("Group is not in JOINED state: " + group.getGroupState());
+                if (state == SIGN_UP) {
+                    initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
+                }
+                return;
+            }
+            // TODO: shu yerda group playerni bog'lashim kerak!!!
+            //
+            if (state == SIGN_UP) {
                 initializePlayer(rabbitQueue, player, chatId, LINK_LANGUAGE);
-            } else {
-                System.out.println("Invalid group ID format: " + temp);
-                initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
             }
-            return;
+        } else {
+            System.out.println("Invalid group ID format: " + temp);
         }
-
-        if (player.getUserState().equals(SIGN_UP)) {
+        if (state == SIGN_UP) {
             initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
-            return;
-        }
-
-        if (text.startsWith("/start -") && player.getUserState().equals(START)) {
-            if (player.getGroup() != null) {
-                System.out.println("Player already linked to a group: " + player.getGroup().getGroupId());
-                return;
-            }
-            String temp = text.replace("/start -", "");
-            if (temp.matches("\\d+")) {
-                long groupId = Long.parseLong(temp);
-
-                Optional<Group> optionalGroup = groupsService.findByGroupId(-1 * groupId);
-                if (optionalGroup.isEmpty()) {
-                    System.out.println("Group not found with ID: -" + groupId);
-                    initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
-                    return;
-                }
-                Group group = optionalGroup.get();
-
-
-                if (!group.getGroupState().equals(JOIN)) {
-                    System.out.println("Group is not in JOINED state: " + group.getGroupState());
-                    initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
-                    return;
-                }
-                //TODO: bu yer ham
-                initializePlayer(rabbitQueue, player, chatId, JOINED);
-
-                handleGroupJoin(-1 * groupId, chatId, firstName);
-                return;
-
-            } else System.out.println("Invalid group ID format: " + temp);
-        }
-
-        if (player.getUserState().equals(START) && text.equals("/start")) {
-            botCommandService.StartCommandChat(chatId);
-            return;
-        }
-
-        if (player.getUserState().equals(START) && text.equals("/info")) {
-            botCommandService.InfoCommandChat(chatId);
         }
     }
 
@@ -130,10 +122,7 @@ public class MessageChatService {
         player.setChatId(chatId);
         player.setUserState(userState);
         playerService.save(player);
-        forLanguage(rabbitQueue, chatId);
-    }
 
-    private void forLanguage(String rabbitQueue, Long chatId) {
         String response = "Choose a language";
         List<List<Map<String, Object>>> responseButtons = List.of(
                 List.of(Map.of("text", "\uD83C\uDDFA\uD83C\uDDF8", "callback_data", "0"))

@@ -1,6 +1,7 @@
 package com.example.telegram_app.botService;
 
 import com.example.telegram_app.model.Player;
+import com.example.telegram_app.model.UserState;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
 import com.example.telegram_app.service.PlayerService;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +31,14 @@ public class CallbackQueryChatService {
         Optional<Player> optionalPlayer = playerService.findById(chatId);
         if (optionalPlayer.isEmpty()) return;
         Player player = optionalPlayer.get();
+        UserState state = player.getUserState();
 
-        if (player.getUserState().equals(LANGUAGE)) {
+        if (state.equals(LANGUAGE)) {
             System.out.println("Language selection callback received: " + callbackData);
             player.setUserState(START);
             playerService.save(player);
             botCommandService.StartCommandChat(chatId, messageId);
-        } else if (player.getUserState().equals(LINK_LANGUAGE)) {
+        } else if (state.equals(LINK_LANGUAGE)) {
             System.out.println("Link language selection callback received: " + callbackData);
             player.setUserState(START);
             playerService.save(player);
