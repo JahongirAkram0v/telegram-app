@@ -2,9 +2,9 @@ package com.example.telegram_app.botService;
 
 import com.example.telegram_app.model.Group;
 import com.example.telegram_app.model.Player;
-import com.example.telegram_app.model.UserState;
+import com.example.telegram_app.model.PlayerState;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
-import com.example.telegram_app.service.GroupsService;
+import com.example.telegram_app.service.GroupService;
 import com.example.telegram_app.service.PlayerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_GROUP;
-import static com.example.telegram_app.model.UserState.*;
+import static com.example.telegram_app.model.PlayerState.*;
 import static com.example.telegram_app.model.GroupState.JOIN;
 
 @Service
@@ -25,7 +25,7 @@ public class MessageChatService {
     private final AnswerProducer answerProducer;
     private final MessageUtilService messageUtilService;
     private final PlayerService playerService;
-    private final GroupsService groupsService;
+    private final GroupService groupService;
     private final BotCommandService botCommandService;
 
     public void messageChat(String rabbitQueue, Message message) {
@@ -36,7 +36,7 @@ public class MessageChatService {
 
         Optional<Player> optionalPlayer = playerService.findById(chatId);
         Player player = optionalPlayer.orElseGet(Player::new);
-        UserState state = player.getUserState();
+        PlayerState state = player.getPlayerState();
 
         switch (state) {
             case SIGN_UP -> {
@@ -74,7 +74,7 @@ public class MessageChatService {
 
     private void CheckRefAndJoin(
             String rabbitQueue, Player player, Long chatId, String firstName,
-            String temp, UserState state
+            String temp, PlayerState state
     ) {
 
         if (state == LANGUAGE || state == LINK_LANGUAGE) {
@@ -90,7 +90,7 @@ public class MessageChatService {
         if (temp.matches("\\d+")) {
             long groupId = -1 * Long.parseLong(temp);
 
-            Optional<Group> optionalGroup = groupsService.findByGroupId(groupId);
+            Optional<Group> optionalGroup = groupService.findByGroupId(groupId);
             //TODO: userga xabar yuborsam ham boladi
             if (optionalGroup.isEmpty()) {
                 System.out.println("Group not found with ID: " + groupId);
@@ -113,11 +113,11 @@ public class MessageChatService {
             if (state == SIGN_UP) {
                 player.setChatId(chatId);
             }
-            player.setUserState(JOINED);
+            player.setPlayerState(JOINED);
             player.setGroup(group);
             // TODO: keyinchalik kerakli tekshirishlar ishlataman
             group.getPlayers().add(player);
-            groupsService.save(group);
+            groupService.save(group);
 
             if (state == START) {
                 webAppButton(rabbitQueue, chatId);
@@ -148,9 +148,9 @@ public class MessageChatService {
         );
     }
 
-    private void initializePlayer(String rabbitQueue, Player player, Long chatId, UserState userState) {
+    private void initializePlayer(String rabbitQueue, Player player, Long chatId, PlayerState playerState) {
         player.setChatId(chatId);
-        player.setUserState(userState);
+        player.setPlayerState(playerState);
         playerService.save(player);
 
         String response = "Choose a language";

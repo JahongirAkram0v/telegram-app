@@ -1,7 +1,7 @@
 package com.example.telegram_app.botService;
 
 import com.example.telegram_app.model.Player;
-import com.example.telegram_app.model.UserState;
+import com.example.telegram_app.model.PlayerState;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
 import com.example.telegram_app.service.PlayerService;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,7 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import java.util.Optional;
 
 import static com.example.telegram_app.config.RabbitQueue.ANSWER_QUEUE_GROUP;
-import static com.example.telegram_app.model.UserState.*;
+import static com.example.telegram_app.model.PlayerState.*;
 
 @Service
 @RequiredArgsConstructor
@@ -31,19 +31,19 @@ public class CallbackQueryChatService {
         Optional<Player> optionalPlayer = playerService.findById(chatId);
         if (optionalPlayer.isEmpty()) return;
         Player player = optionalPlayer.get();
-        UserState state = player.getUserState();
+        PlayerState state = player.getPlayerState();
 
         switch (state) {
             case LANGUAGE -> {
                 System.out.println("Language selection callback received: " + callbackData);
-                player.setUserState(START);
+                player.setPlayerState(START);
                 playerService.save(player);
                 botCommandService.StartCommandChat(chatId, messageId);
             }
             case LINK_LANGUAGE -> {
 
                 System.out.println("Link language selection callback received: " + callbackData);
-                player.setUserState(START);
+                player.setPlayerState(START);
                 playerService.save(player);
                 Long groupId = player.getGroup().getGroupId();
                 String response = "You have successfully joined the group with ID: " + groupId;

@@ -1,6 +1,6 @@
 package com.example.telegram_app.model;
 
-public enum UserState {
+public enum PlayerState {
 
     SIGN_UP,
     LANGUAGE,

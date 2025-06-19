@@ -2,7 +2,7 @@ package com.example.telegram_app.botService;
 
 import com.example.telegram_app.model.Group;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
-import com.example.telegram_app.service.GroupsService;
+import com.example.telegram_app.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -18,20 +18,20 @@ public class CallbackQueryGroupService {
 
     private final AnswerProducer answerProducer;
     private final MessageUtilService messageUtilService;
-    private final GroupsService groupsService;
+    private final GroupService groupService;
 
     public void callbackGroup(String rabbitmqQueue, CallbackQuery callbackQuery) {
         Integer messageId = callbackQuery.getMessage().getMessageId();
         String callbackData = callbackQuery.getData();
         Long groupId = callbackQuery.getMessage().getChatId();
 
-        Optional<Group> optionalGroup = groupsService.findByGroupId(groupId);
+        Optional<Group> optionalGroup = groupService.findByGroupId(groupId);
         if (optionalGroup.isEmpty()) return;
         Group group = optionalGroup.get();
 
         if (group.getGroupState().equals(LANGUAGE)) {
             group.setGroupState(START);
-            groupsService.save(group);
+            groupService.save(group);
             String text = "O'yinni boshlash uchun /start ni bosing!";
 
             answerProducer.answer(rabbitmqQueue,

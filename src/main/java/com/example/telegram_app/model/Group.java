@@ -1,5 +1,6 @@
 package com.example.telegram_app.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,5 +25,6 @@ public class Group {
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn(name = "player_index")
+    @JsonManagedReference
     List<Player> players = new ArrayList<>();
 }

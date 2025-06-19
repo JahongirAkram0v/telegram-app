@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class GroupsService {
+public class GroupService {
 
     private final GroupRepo groupRepo;
 

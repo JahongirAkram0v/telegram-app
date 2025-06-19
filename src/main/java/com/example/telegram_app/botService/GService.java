@@ -2,7 +2,7 @@ package com.example.telegram_app.botService;
 
 import com.example.telegram_app.model.Group;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
-import com.example.telegram_app.service.GroupsService;
+import com.example.telegram_app.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.ChatMemberUpdated;
@@ -20,7 +20,7 @@ public class GService {
 
     private final MessageUtilService messageUtilService;
     private final AnswerProducer answerProducer;
-    private final GroupsService groupsService;
+    private final GroupService groupService;
 
     public void group(String rabbitQueue, ChatMemberUpdated chatMemberUpdated) {
 
@@ -39,13 +39,13 @@ public class GService {
             }
             case "administrator" -> {
 
-                Optional<Group> optionalGroup = groupsService.findByGroupId(groupId);
+                Optional<Group> optionalGroup = groupService.findByGroupId(groupId);
                 Group group = optionalGroup.orElseGet(Group::new);
 
                 if (group.getGroupState().equals(SIGN_UP)) {
                     group.setGroupId(groupId);
                     group.setGroupState(LANGUAGE);
-                    groupsService.save(group);
+                    groupService.save(group);
 
                     String response = "Choose a language";
                     List<List<Map<String, Object>>> responseButtons = List.of(

@@ -1,5 +1,6 @@
 package com.example.telegram_app.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,11 +18,11 @@ public class Player {
     private int languageCode = 0; // 0 - en, 1 - uz, 2 - ru
 
     @Enumerated(value = EnumType.STRING)
-    private UserState userState = UserState.SIGN_UP;
+    private PlayerState playerState = PlayerState.SIGN_UP;
     private Long choosePlayerId;
-    private Boolean isActive = false;
     //
     @ManyToOne
     @JoinColumn(name = "group_id")
+    @JsonBackReference
     private Group group;
 }

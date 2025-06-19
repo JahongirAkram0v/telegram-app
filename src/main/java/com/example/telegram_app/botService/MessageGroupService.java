@@ -3,7 +3,7 @@ package com.example.telegram_app.botService;
 import com.example.telegram_app.model.Group;
 import com.example.telegram_app.model.GroupState;
 import com.example.telegram_app.rabbitmqService.AnswerProducer;
-import com.example.telegram_app.service.GroupsService;
+import com.example.telegram_app.service.GroupService;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,14 +23,14 @@ public class MessageGroupService {
     private final String telegramBotUsername = dotenv.get("TELEGRAM_BOT_USERNAME");
     private final AnswerProducer answerProducer;
     private final MessageUtilService messageUtilService;
-    private final GroupsService groupsService;
+    private final GroupService groupService;
 
     public void messageGroup(String rabbitQueue, Message message) {
 
         Long groupId = message.getChat().getId();
         String text = message.getText();
 
-        Optional<Group> optionalGroup = groupsService.findByGroupId(groupId);
+        Optional<Group> optionalGroup = groupService.findByGroupId(groupId);
         if (optionalGroup.isEmpty()) {
             System.out.println("ERROR!! --- Group not found for ID: " + groupId);
             return;
@@ -46,7 +46,7 @@ public class MessageGroupService {
             case START -> {
                 if (text.startsWith("/start@")) {
                     group.setGroupState(JOIN);
-                    groupsService.save(group);
+                    groupService.save(group);
 
                     List<List<Map<String, Object>>> response = List.of(
                             List.of(Map.of(
@@ -70,7 +70,7 @@ public class MessageGroupService {
             case JOIN -> {
                 if (text.startsWith("/start@")) {
                     group.setGroupState(GAME);
-                    groupsService.save(group);
+                    groupService.save(group);
 
                     String res = "Oyin boshlandi!";
                     answerProducer.answer(
