@@ -7,4 +7,6 @@ public enum PlayerState {
     LINK_LANGUAGE,
     START,
     JOINED,
+    WAITING,
+    LOBBY,
 }

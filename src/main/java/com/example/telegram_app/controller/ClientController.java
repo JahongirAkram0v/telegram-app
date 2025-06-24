@@ -1,51 +1,53 @@
 package com.example.telegram_app.controller;
 
-import com.example.telegram_app.model.Group;
 import com.example.telegram_app.model.Player;
+import com.example.telegram_app.model.dto.ClientPlayerDTO;
+import com.example.telegram_app.model.dto.ServerPlayerDTO;
 import com.example.telegram_app.service.GroupService;
 import com.example.telegram_app.service.PlayerService;
+import com.rabbitmq.client.AMQP;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
-@RestController
-@RequestMapping("/player")
+@Controller
 @CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class ClientController {
 
+    private final SimpMessagingTemplate messagingTemplate;
+
     private final GroupService groupService;
     private final PlayerService playerService;
 
-    @GetMapping("/{playerId}")
-    public ResponseEntity<Player> getById(@PathVariable Long playerId) {
-        Optional<Player> optionalPlayer = playerService.findById(playerId);
-        return optionalPlayer
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
+    @MessageMapping("/game.send")
+    public void sendMessage(@Payload ServerPlayerDTO serverPlayerDTO) {
 
-    @PutMapping()
-    public ResponseEntity<Void> savePlayer(@RequestBody Player player) {
-        playerService.save(player);
-        return ResponseEntity.ok().build();
-    }
+        if (!playerService.existsByChatId(serverPlayerDTO.getChatId())) {
+            messagingTemplate.convertAndSend(
+                    "/topic/room/" + serverPlayerDTO.getGroupId(),
+                    "Player not found"
+            );
+            return;
+        } else if (!groupService.existsByGroupId(serverPlayerDTO.getGroupId())){
+            messagingTemplate.convertAndSend(
+                    "/topic/room/" + serverPlayerDTO.getGroupId(),
+                    "group does not exist"
+            );
+            return;
+        }
 
-    @GetMapping("/{playerId}/group")
-    public ResponseEntity<Group> getByPlayerId(@PathVariable Long playerId) {
+        playerService.updatePlayer(serverPlayerDTO);
 
-        Optional<Player> optionalPlayer = playerService.findById(playerId);
-        return optionalPlayer
-                .map(player -> ResponseEntity.ok(player.getGroup()))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/group")
-    public ResponseEntity<Void> saveGroup(@RequestBody Group group) {
-        groupService.save(group);
-        return ResponseEntity.ok().build();
+        messagingTemplate.convertAndSend(
+                "/topic/room/" + serverPlayerDTO.getGroupId(),
+                groupService.playerDTOToGroupDTO(serverPlayerDTO.getGroupId())
+        );
     }
 
 }

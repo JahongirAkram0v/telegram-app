@@ -7,4 +7,5 @@ public enum GroupState {
     START,
     JOIN,
     GAME,
+    WAITING,
 }

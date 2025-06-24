@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input, select { margin: 5px; padding: 5px; }
+        pre { background: #f2f2f2; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<h2>Player Ma'lumot</h2>
+
+<!-- 1. ChatId kiritish -->
+<div>
+    <input type="text" id="chatId" placeholder="chatId" />
+    <button onclick="loadPlayer()">Yuklash</button>
+</div>
+
+<!-- 2. ClientPlayerDTO ko‘rinishi -->
+<pre id="playerDisplay"></pre>
+
+<!-- 3. Ma'lumotni tahrirlash -->
+<div id="editSection" style="display:none;">
+    <h3>O'zgartirish</h3>
+    <label>PlayerState:
+        <select id="playerState">
+            <option value="WAITING">WAITING</option>
+            <option value="READY">READY</option>
+            <option value="PLAYING">PLAYING</option>
+        </select>
+    </label><br/>
+    <label>Choose Player ID:
+        <input type="text" id="choosePlayerId" placeholder="Fakultativ" />
+    </label><br/>
+    <button onclick="sendUpdate()">Serverga yuborish</button>
+</div>
+
+<!-- 4. WebSocketdan GroupDTO qabul qilish -->
+<h3>Group holati (WebSocket orqali):</h3>
+<pre id="groupData"></pre>
+
+<script>
+    let stompClient = null;
+    let currentGroupId = null;
+    let currentChatId = null;
+
+    // WebSocketga ulanadi
+    function connectSocket(groupId) {
+        const socket = new SockJS('http://localhost:8080/ws');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, () => {
+            stompClient.subscribe(`/topic/room/${groupId}`, (message) => {
+                const data = JSON.parse(message.body);
+                document.getElementById("groupData").textContent = JSON.stringify(data, null, 2);
+            });
+        });
+    }
+
+    // Ma'lumotlarni backenddan yuklash
+    async function loadPlayer() {
+        const chatId = document.getElementById("chatId").value;
+        if (!chatId) return alert("Chat ID kerak!");
+
+        const res = await fetch(`http://localhost:8080/player/${chatId}`);
+        const data = await res.json();
+        currentChatId = data.chatId;
+        currentGroupId = data.groupId;
+
+        document.getElementById("playerDisplay").textContent = JSON.stringify(data, null, 2);
+        document.getElementById("editSection").style.display = 'block';
+
+        if (currentGroupId !== null) {
+            connectSocket(currentGroupId); // faqat groupId mavjud bo‘lsa ulanadi
+        }
+    }
+
+    // WebSocket orqali ServerPlayerDTO yuborish
+    function sendUpdate() {
+        const playerState = document.getElementById("playerState").value;
+        const choosePlayerId = document.getElementById("choosePlayerId").value;
+
+        const payload = {
+            chatId: currentChatId,
+            playerState: playerState,
+            choosePlayerId: choosePlayerId ? parseInt(choosePlayerId) : null,
+            groupId: currentGroupId,
+            groupState: null // optional, server hal qiladi
+        };
+
+        stompClient.send("/app/game.send", {}, JSON.stringify(payload));
+    }
+</script>
+
+</body>
+</html>
