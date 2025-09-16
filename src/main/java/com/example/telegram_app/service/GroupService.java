@@ -3,7 +3,6 @@ package com.example.telegram_app.service;
 import com.example.telegram_app.model.Group;
 import com.example.telegram_app.model.dto.GroupDTO;
 import com.example.telegram_app.model.dto.PlayerDTO;
-import com.example.telegram_app.model.dto.ServerPlayerDTO;
 import com.example.telegram_app.repository.GroupRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +23,10 @@ public class GroupService {
         return groupRepo.findById(groupId);
     }
 
+    public Optional<Group> findGroupWithPlayers(Long groupId) {
+        return groupRepo.findByIdWithPlayers(groupId);
+    }
+
     public boolean existsByGroupId(Long groupId) {
         return groupRepo.existsById(groupId);
     }
@@ -41,8 +44,8 @@ public class GroupService {
                 .build();
     }
 
-    public GroupDTO playerDTOToGroupDTO(Long groupId) {
-        return groupRepo.findById(groupId)
+    public GroupDTO updateGroupDTO(Long groupId) {
+        return groupRepo.findByIdWithPlayers(groupId)
                 .map(this::groupToGroupDTO)
                 .orElseThrow(() -> new IllegalArgumentException("Group not found"));
     }

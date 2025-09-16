@@ -1,6 +1,5 @@
 package com.example.telegram_app.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,18 +12,22 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "_group")
+@Entity
+@Table(name = "_group")
 public class Group {
 
     @Id
     private Long groupId;
-    private int languageCode = 0; // 0 - en, 1 - uz, 2 - ru
 
+    @Builder.Default
+    private int language = 0; // 0 - en, 1 - uz, 2 - ru
+
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private GroupState groupState = GroupState.SIGN_UP;
 
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @Builder.Default
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @OrderColumn(name = "player_index")
-    @JsonManagedReference
-    List<Player> players = new ArrayList<>();
+    private List<Player> players = new ArrayList<>();
 }

@@ -9,11 +9,15 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ClientPlayerDTO {
+public class ControllerPlayerDTO {
+
 
     private Long chatId;
+    private Long groupId;
+    //groupState orqali group oyinga tayyor yoki boshlangani bilsa boladi
+    private GroupState groupState;
+    //playerState orqali player oyinga qoshilganini bilsa boladi
     private PlayerState playerState;
 
-    private Long groupId;
-    private GroupState groupState;
+
 }

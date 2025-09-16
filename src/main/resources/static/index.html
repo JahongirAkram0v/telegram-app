@@ -1,32 +1,83 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>WebSocket Game</title>
+    <title>WebSocket O'yin Paneli</title>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        input, select { margin: 5px; padding: 5px; }
-        pre { background: #f2f2f2; padding: 10px; border-radius: 4px; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f9fafb;
+        }
+        h2, h3 {
+            color: #333;
+        }
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, select, button {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007BFF;
+        }
+        button {
+            background: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f2f2f2;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 250px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            color: white;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .status-WAITING { background: orange; }
+        .status-READY { background: green; }
+        .status-PLAYING { background: blue; }
     </style>
 </head>
 <body>
 
-<h2>Player Ma'lumot</h2>
+<h2>🎮 WebSocket O'yin Paneli</h2>
 
-<!-- 1. ChatId kiritish -->
-<div>
-    <input type="text" id="chatId" placeholder="chatId" />
+<div class="card">
+    <h3>1-qadam: O'yinchi ma'lumotini yuklash</h3>
+    <input type="text" id="chatId" placeholder="Chat ID kiriting..." />
     <button onclick="loadPlayer()">Yuklash</button>
 </div>
 
-<!-- 2. ClientPlayerDTO ko‘rinishi -->
-<pre id="playerDisplay"></pre>
+<div class="card" id="playerCard" style="display:none;">
+    <h3>O'yinchi ma'lumoti</h3>
+    <div id="playerInfo"></div>
+</div>
 
-<!-- 3. Ma'lumotni tahrirlash -->
-<div id="editSection" style="display:none;">
-    <h3>O'zgartirish</h3>
+<div class="card" id="editSection" style="display:none;">
+    <h3>2-qadam: O'zgartirish</h3>
     <label>PlayerState:
         <select id="playerState">
             <option value="WAITING">WAITING</option>
@@ -37,23 +88,22 @@
     <label>Choose Player ID:
         <input type="text" id="choosePlayerId" placeholder="Fakultativ" />
     </label><br/>
-    <button onclick="sendUpdate()">Serverga yuborish</button>
+    <button onclick="sendUpdate()">✅ Serverga yuborish</button>
 </div>
 
-<!-- 4. WebSocketdan GroupDTO qabul qilish -->
-<h3>Group holati (WebSocket orqali):</h3>
-<pre id="groupData"></pre>
+<div class="card">
+    <h3>3-qadam: Group holati (real vaqt)</h3>
+    <pre id="groupData">Hali ma'lumot yo'q...</pre>
+</div>
 
 <script>
     let stompClient = null;
     let currentGroupId = null;
     let currentChatId = null;
 
-    // WebSocketga ulanadi
     function connectSocket(groupId) {
         const socket = new SockJS('http://localhost:8080/ws');
         stompClient = Stomp.over(socket);
-
         stompClient.connect({}, () => {
             stompClient.subscribe(`/topic/room/${groupId}`, (message) => {
                 const data = JSON.parse(message.body);
@@ -62,26 +112,31 @@
         });
     }
 
-    // Ma'lumotlarni backenddan yuklash
     async function loadPlayer() {
         const chatId = document.getElementById("chatId").value;
-        if (!chatId) return alert("Chat ID kerak!");
+        if (!chatId) return alert("❗ Chat ID kiriting!");
 
         const res = await fetch(`http://localhost:8080/player/${chatId}`);
         const data = await res.json();
         currentChatId = data.chatId;
         currentGroupId = data.groupId;
 
-        document.getElementById("playerDisplay").textContent = JSON.stringify(data, null, 2);
+        document.getElementById("playerCard").style.display = 'block';
+        document.getElementById("playerInfo").innerHTML = `
+            <strong>Chat ID:</strong> ${data.chatId}<br/>
+            <strong>Group ID:</strong> ${data.groupId ?? 'Yo‘q'}<br/>
+            <strong>Status:</strong> <span class="status-badge status-${data.playerState}">${data.playerState}</span>
+        `;
         document.getElementById("editSection").style.display = 'block';
 
         if (currentGroupId !== null) {
-            connectSocket(currentGroupId); // faqat groupId mavjud bo‘lsa ulanadi
+            connectSocket(currentGroupId);
         }
     }
 
-    // WebSocket orqali ServerPlayerDTO yuborish
     function sendUpdate() {
+        if (!stompClient) return alert("❗ Avval group'ga ulang!");
+
         const playerState = document.getElementById("playerState").value;
         const choosePlayerId = document.getElementById("choosePlayerId").value;
 
@@ -90,10 +145,11 @@
             playerState: playerState,
             choosePlayerId: choosePlayerId ? parseInt(choosePlayerId) : null,
             groupId: currentGroupId,
-            groupState: null // optional, server hal qiladi
+            groupState: null
         };
 
         stompClient.send("/app/game.send", {}, JSON.stringify(payload));
+        alert("✅ Ma'lumot yuborildi!");
     }
 </script>
 

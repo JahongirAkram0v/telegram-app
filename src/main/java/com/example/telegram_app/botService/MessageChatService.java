@@ -68,7 +68,7 @@ public class MessageChatService {
                     initializePlayer(rabbitQueue, player, chatId, LANGUAGE);
                 }
             }
-            case JOINED -> webAppButton(rabbitQueue, chatId);
+            case IN_GAME -> webAppButton(rabbitQueue, chatId);
         }
     }
 
@@ -90,8 +90,8 @@ public class MessageChatService {
         if (temp.matches("\\d+")) {
             long groupId = -1 * Long.parseLong(temp);
 
-            Optional<Group> optionalGroup = groupService.findByGroupId(groupId);
-            //TODO: userga xabar yuborsam ham boladi
+            Optional<Group> optionalGroup = groupService.findGroupWithPlayers(groupId);
+            //TODO: userning o'ziga xabar yuborsishim kerak
             if (optionalGroup.isEmpty()) {
                 System.out.println("Group not found with ID: " + groupId);
                 if (state == SIGN_UP) {
@@ -101,7 +101,7 @@ public class MessageChatService {
             }
             Group group = optionalGroup.get();
 
-            //TODO: userga xabar yuborsam ham boladi
+            //TODO: userning o'ziga xabar yuborsishim kerak
             if (!group.getGroupState().equals(JOIN)) {
                 System.out.println("Group is not in JOINED state: " + group.getGroupState());
                 if (state == SIGN_UP) {
@@ -113,7 +113,7 @@ public class MessageChatService {
             if (state == SIGN_UP) {
                 player.setChatId(chatId);
             }
-            player.setPlayerState(JOINED);
+            player.setPlayerState(IN_GAME);
             player.setGroup(group);
             // TODO: keyinchalik kerakli tekshirishlar ishlataman
             group.getPlayers().add(player);
@@ -132,6 +132,7 @@ public class MessageChatService {
                 initializePlayer(rabbitQueue, player, chatId, LINK_LANGUAGE);
             }
         } else {
+            //TODO: userning o'ziga xabar yuborsishim kerak
             System.out.println("Invalid group ID format: " + temp);
             if (state == SIGN_UP) {
                 initializePlayer(rabbitQueue, player, chatId, LANGUAGE);

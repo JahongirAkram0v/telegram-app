@@ -6,7 +6,8 @@ public enum PlayerState {
     LANGUAGE,
     LINK_LANGUAGE,
     START,
-    JOINED,
-    WAITING,
-    LOBBY,
+    BLOCKED,
+    IN_GAME,
+    LOSE,
+    WIN,
 }

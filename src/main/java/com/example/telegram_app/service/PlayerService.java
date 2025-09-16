@@ -1,7 +1,7 @@
 package com.example.telegram_app.service;
 
 import com.example.telegram_app.model.Player;
-import com.example.telegram_app.model.dto.ClientPlayerDTO;
+import com.example.telegram_app.model.dto.ControllerPlayerDTO;
 import com.example.telegram_app.model.dto.ServerPlayerDTO;
 import com.example.telegram_app.repository.PlayerRepo;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +23,17 @@ public class PlayerService {
         return playerRepo.findById(chatId);
     }
 
-    public ClientPlayerDTO playerToClientPlayerDTO(Player player) {
-        return ClientPlayerDTO.builder()
+    public ControllerPlayerDTO playerToControllerPlayerDTO(Player player) {
+        if (player.getGroup() == null) {
+            return ControllerPlayerDTO.builder()
+                    .chatId(player.getChatId())
+                    .build();
+        }
+        return ControllerPlayerDTO.builder()
                 .chatId(player.getChatId())
                 .playerState(player.getPlayerState())
-                .groupId(player.getGroup() == null ? null : player.getGroup().getGroupId())
-                .groupState(player.getGroup() == null ? null : player.getGroup().getGroupState())
+                .groupId(player.getGroup().getGroupId())
+                .groupState(player.getGroup().getGroupState())
                 .build();
     }
 

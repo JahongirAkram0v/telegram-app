@@ -5,7 +5,9 @@ public enum GroupState {
     SIGN_UP,
     LANGUAGE,
     START,
+    LEAVE,
     JOIN,
     GAME,
-    WAITING,
+    CHOOSE,
+    CHECK,
 }

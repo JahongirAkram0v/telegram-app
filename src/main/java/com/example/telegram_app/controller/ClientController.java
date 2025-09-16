@@ -1,19 +1,14 @@
 package com.example.telegram_app.controller;
 
-import com.example.telegram_app.model.Player;
-import com.example.telegram_app.model.dto.ClientPlayerDTO;
 import com.example.telegram_app.model.dto.ServerPlayerDTO;
 import com.example.telegram_app.service.GroupService;
 import com.example.telegram_app.service.PlayerService;
-import com.rabbitmq.client.AMQP;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @Controller
 @CrossOrigin(origins = "http://localhost:3000")
@@ -46,7 +41,7 @@ public class ClientController {
 
         messagingTemplate.convertAndSend(
                 "/topic/room/" + serverPlayerDTO.getGroupId(),
-                groupService.playerDTOToGroupDTO(serverPlayerDTO.getGroupId())
+                groupService.updateGroupDTO(serverPlayerDTO.getGroupId())
         );
     }
 
