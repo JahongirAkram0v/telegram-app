@@ -14,7 +14,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/player")
-@CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class Controller {
 
@@ -23,7 +22,7 @@ public class Controller {
 
     @GetMapping("/{playerId}")
     public ResponseEntity<ControllerPlayerDTO> getByPlayerId(@PathVariable Long playerId) {
-
+        System.out.println("salom");
         Optional<Player> optionalPlayer = playerService.findById(playerId);
         return optionalPlayer
                 .map(player -> ResponseEntity.ok(playerService.playerToControllerPlayerDTO(player)))

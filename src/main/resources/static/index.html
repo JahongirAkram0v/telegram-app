@@ -1,155 +1,295 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-    <meta charset="UTF-8">
-    <title>WebSocket O'yin Paneli</title>
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WebSocket O'yin Paneli</title>
+	<script src="https://telegram.org/js/telegram-web-app.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+	<style>
+		/* Telegram dizayn o'zgaruvchilari (variables) */
+        :root {
+            --tg-bg-color: var(--tg-theme-bg-color, #f9fafb);
+            --tg-text-color: var(--tg-theme-text-color, #222);
+            --tg-hint-color: var(--tg-theme-hint-color, #999);
+            --tg-button-color: var(--tg-theme-button-color, #007BFF);
+            --tg-button-text-color: var(--tg-theme-button-text-color, #ffffff);
+            --tg-secondary-bg-color: var(--tg-theme-secondary-bg-color, #ffffff);
+            --tg-border-color: #e0e0e0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f9fafb;
-        }
-        h2, h3 {
-            color: #333;
-        }
-        .card {
-            background: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background-color: var(--tg-bg-color);
+            color: var(--tg-text-color);
+            margin: 0;
         }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h2, h3 {
+            color: var(--tg-text-color);
+            margin-top: 0;
+            border-bottom: 1px solid var(--tg-border-color);
+            padding-bottom: 10px;
+        }
+
+        .card {
+            background: var(--tg-secondary-bg-color);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
         input, select, button {
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid var(--tg-border-color);
+            background: var(--tg-bg-color);
+            color: var(--tg-text-color);
+            box-sizing: border-box; /* To'g'ri o'lcham uchun */
+            font-size: 16px;
         }
+
         input:focus, select:focus {
             outline: none;
-            border-color: #007BFF;
+            border-color: var(--tg-button-color);
         }
+
         button {
-            background: #007BFF;
-            color: white;
+            background: var(--tg-button-color);
+            color: var(--tg-button-text-color);
             border: none;
             cursor: pointer;
             font-weight: bold;
+            transition: opacity 0.2s ease;
         }
+
         button:hover {
-            background: #0056b3;
+            opacity: 0.85;
         }
+
+        button:disabled {
+            background-color: var(--tg-hint-color);
+            cursor: not-allowed;
+        }
+
         pre {
-            background: #f2f2f2;
+            background: var(--tg-bg-color);
             padding: 12px;
-            border-radius: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--tg-border-color);
             overflow-x: auto;
             max-height: 250px;
+            font-size: 14px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
         }
+
         .status-badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 5px;
+            padding: 4px 10px;
+            border-radius: 15px;
             color: white;
             font-size: 12px;
-            margin-left: 5px;
+            font-weight: 500;
         }
-        .status-WAITING { background: orange; }
-        .status-READY { background: green; }
-        .status-PLAYING { background: blue; }
-    </style>
+        .status-WAITING { background: #f39c12; }
+        .status-READY { background: #2ecc71; }
+        .status-PLAYING { background: #3498db; }
+
+        #statusMessage {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none; /* Boshida ko'rinmas */
+        }
+        .status-error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .status-loading {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+	</style>
 </head>
 <body>
 
-<h2>🎮 WebSocket O'yin Paneli</h2>
+<div class="container">
+	<h2>🎮 O'yin Paneli</h2>
 
-<div class="card">
-    <h3>1-qadam: O'yinchi ma'lumotini yuklash</h3>
-    <input type="text" id="chatId" placeholder="Chat ID kiriting..." />
-    <button onclick="loadPlayer()">Yuklash</button>
-</div>
+	<div id="statusMessage"></div>
 
-<div class="card" id="playerCard" style="display:none;">
-    <h3>O'yinchi ma'lumoti</h3>
-    <div id="playerInfo"></div>
-</div>
+	<div class="card" id="playerCard" style="display:none;">
+		<h3>Sizning ma'lumotingiz</h3>
+		<div id="playerInfo"></div>
+	</div>
 
-<div class="card" id="editSection" style="display:none;">
-    <h3>2-qadam: O'zgartirish</h3>
-    <label>PlayerState:
-        <select id="playerState">
-            <option value="WAITING">WAITING</option>
-            <option value="READY">READY</option>
-            <option value="PLAYING">PLAYING</option>
-        </select>
-    </label><br/>
-    <label>Choose Player ID:
-        <input type="text" id="choosePlayerId" placeholder="Fakultativ" />
-    </label><br/>
-    <button onclick="sendUpdate()">✅ Serverga yuborish</button>
-</div>
+	<div class="card" id="editSection" style="display:none;">
+		<h3>O'yinni Boshqarish</h3>
+		<label for="playerState">Holatni o'zgartirish:</label>
+		<select id="playerState">
+			<option value="WAITING">WAITING</option>
+			<option value="READY">READY</option>
+			<option value="PLAYING">PLAYING</option>
+		</select>
 
-<div class="card">
-    <h3>3-qadam: Group holati (real vaqt)</h3>
-    <pre id="groupData">Hali ma'lumot yo'q...</pre>
+		<label for="choosePlayerId">O'yinchi ID'sini tanlash (ixtiyoriy):</label>
+		<input type="text" id="choosePlayerId" placeholder="Masalan: 12345678" />
+
+		<button id="updateButton" onclick="sendUpdate()">✅ Serverga yuborish</button>
+	</div>
+
+	<div class="card" id="groupSection" style="display:none;">
+		<h3>Guruh holati (real vaqtda)</h3>
+		<pre id="groupData">Ulanish kutilmoqda...</pre>
+	</div>
 </div>
 
 <script>
+	// --- KONFIGURATSIYA ---
+    // Backend URL manzilini shu yerga yozing.
+    // TEST UCHUN: Agar backend kompyuteringizda ishlayotgan bo'lsa, ngrok kabi tunnel servisidan foydalaning.
+    // PROD UCHUN: Haqiqiy server manzilingizni (HTTPS bilan) yozing.
+    const BACKEND_URL = 'https://6f48c76447e9.ngrok-free.app';
+    // -----------------------
+
     let stompClient = null;
     let currentGroupId = null;
     let currentChatId = null;
+    const tg = window.Telegram.WebApp;
 
-    function connectSocket(groupId) {
-        const socket = new SockJS('http://localhost:8080/ws');
-        stompClient = Stomp.over(socket);
-        stompClient.connect({}, () => {
-            stompClient.subscribe(`/topic/room/${groupId}`, (message) => {
-                const data = JSON.parse(message.body);
-                document.getElementById("groupData").textContent = JSON.stringify(data, null, 2);
-            });
-        });
+    // Elementlarni o'zgaruvchiga olish
+    const statusMessageEl = document.getElementById("statusMessage");
+    const playerCardEl = document.getElementById("playerCard");
+    const editSectionEl = document.getElementById("editSection");
+    const groupSectionEl = document.getElementById("groupSection");
+    const updateButton = document.getElementById("updateButton");
+
+    // Sahifa yuklanganda ishga tushadigan funksiya
+    document.addEventListener('DOMContentLoaded', () => {
+        tg.ready(); // Telegram App tayyor ekanligini bildirish
+        tg.expand(); // Ilovani to'liq ekranga yoyish
+
+        const user = tg.initDataUnsafe?.user;
+
+        if (user?.id) {
+            currentChatId = user.id;
+            loadPlayer(currentChatId);
+        } else {
+            // Agar Telegram'dan tashqarida ochilsa (test uchun)
+            showStatus("Xatolik: Ilovani Telegram orqali oching.", 'error');
+            console.error("Telegram user data not found.");
+        }
+    });
+
+    function showStatus(message, type = 'loading') {
+        statusMessageEl.textContent = message;
+        statusMessageEl.className = `status-${type}`;
+        statusMessageEl.style.display = 'block';
     }
 
-    async function loadPlayer() {
-        const chatId = document.getElementById("chatId").value;
-        if (!chatId) return alert("❗ Chat ID kiriting!");
+    function hideStatus() {
+        statusMessageEl.style.display = 'none';
+    }
 
-        const res = await fetch(`http://localhost:8080/player/${chatId}`);
-        const data = await res.json();
-        currentChatId = data.chatId;
-        currentGroupId = data.groupId;
+    function connectSocket(groupId) {
+        if (stompClient && stompClient.connected) return;
 
-        document.getElementById("playerCard").style.display = 'block';
-        document.getElementById("playerInfo").innerHTML = `
-            <strong>Chat ID:</strong> ${data.chatId}<br/>
-            <strong>Group ID:</strong> ${data.groupId ?? 'Yo‘q'}<br/>
-            <strong>Status:</strong> <span class="status-badge status-${data.playerState}">${data.playerState}</span>
-        `;
-        document.getElementById("editSection").style.display = 'block';
+        const socket = new SockJS(`${BACKEND_URL}/ws`);
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null; // Konsoldagi ortiqcha loglarni o'chirish
 
-        if (currentGroupId !== null) {
-            connectSocket(currentGroupId);
+        stompClient.connect({},
+            () => { // Muvaffaqiyatli ulansa
+                console.log('WebSocket ulandi.');
+                stompClient.subscribe(`/topic/room/${groupId}`, (message) => {
+                    try {
+                        const data = JSON.parse(message.body);
+                        document.getElementById("groupData").textContent = JSON.stringify(data, null, 2);
+                    } catch (e) {
+                        console.error("WebSocket xabarini o'qishda xatolik:", e);
+                        document.getElementById("groupData").textContent = "Xato: Ma'lumot formati noto'g'ri.";
+                    }
+                });
+            },
+            (error) => { // Ulanishda xatolik bo'lsa
+                console.error('WebSocket ulanishda xatolik:', error);
+                document.getElementById("groupData").textContent = "Serverga ulanib bo'lmadi. Internet aloqasini tekshiring yoki keyinroq urunib ko'ring.";
+                tg.showAlert("Server bilan aloqa uzildi.");
+            }
+        );
+    }
+
+    async function loadPlayer(chatId) {
+        showStatus("O'yinchi ma'lumotlari yuklanmoqda...");
+        try {
+            const response = await fetch(`${BACKEND_URL}/player/${chatId}`);
+            if (!response.ok) {
+                throw new Error(`Server xatosi: ${response.status}`);
+            }
+            const data = await response.json();
+            hideStatus();
+
+            currentGroupId = data.groupId;
+
+            playerCardEl.style.display = 'block';
+            document.getElementById("playerInfo").innerHTML = `
+                <strong>Chat ID:</strong> ${data.chatId}<br/>
+                <strong>Group ID:</strong> ${data.groupId ?? 'Guruhga qo‘shilmagan'}<br/>
+                <strong>Holati:</strong> <span class="status-badge status-${data.playerState}">${data.playerState}</span>
+            `;
+
+            editSectionEl.style.display = 'block';
+            document.getElementById("playerState").value = data.playerState;
+
+            if (currentGroupId) {
+                groupSectionEl.style.display = 'block';
+                connectSocket(currentGroupId);
+            } else {
+                updateButton.disabled = true;
+                updateButton.textContent = "Guruhga qo'shilmagansiz";
+            }
+
+        } catch (error) {
+            console.error("O'yinchi ma'lumotlarini yuklashda xatolik:", error);
+            showStatus("Ma'lumotlarni yuklab bo'lmadi. Server bilan aloqani tekshiring.", 'error');
         }
     }
 
     function sendUpdate() {
-        if (!stompClient) return alert("❗ Avval group'ga ulang!");
+        if (!stompClient || !stompClient.connected) {
+            tg.showAlert("Server bilan aloqa yo'q. Iltimos, sahifani yangilang.");
+            return;
+        }
 
         const playerState = document.getElementById("playerState").value;
-        const choosePlayerId = document.getElementById("choosePlayerId").value;
+        const choosePlayerIdInput = document.getElementById("choosePlayerId").value;
 
         const payload = {
             chatId: currentChatId,
             playerState: playerState,
-            choosePlayerId: choosePlayerId ? parseInt(choosePlayerId) : null,
+            choosePlayerId: choosePlayerIdInput ? parseInt(choosePlayerIdInput) : null,
             groupId: currentGroupId,
-            groupState: null
+            groupState: null // Bu backend'da belgilanadi
         };
 
         stompClient.send("/app/game.send", {}, JSON.stringify(payload));
-        alert("✅ Ma'lumot yuborildi!");
+
+        // Muvaffaqiyatli yuborilganini bildirish uchun
+        tg.HapticFeedback.notificationOccurred('success');
+        tg.showAlert("✅ Ma'lumot muvaffaqiyatli yuborildi!");
     }
 </script>
 

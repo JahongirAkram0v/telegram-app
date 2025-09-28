@@ -43,7 +43,7 @@ public class CallbackQueryChatService {
             case LINK_LANGUAGE -> {
 
                 System.out.println("Link language selection callback received: " + callbackData);
-                player.setPlayerState(START);
+                player.setPlayerState(IN_GAME);
                 playerService.save(player);
                 Long groupId = player.getGroup().getGroupId();
                 String response = "You have successfully joined the group with ID: " + groupId;
