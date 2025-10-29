@@ -1,5 +1,6 @@
 package com.example.telegram_app.controller;
 
+import com.example.telegram_app.botService.TelegramAuthService;
 import com.example.telegram_app.model.Group;
 import com.example.telegram_app.model.Player;
 import com.example.telegram_app.model.dto.ControllerPlayerDTO;
@@ -19,6 +20,32 @@ public class Controller {
 
     private final PlayerService playerService;
     private final GroupService groupService;
+
+    @PostMapping("/verify")
+    public ResponseEntity<?> verifyUser(@RequestBody String initData) {
+
+        System.out.println(initData);
+
+        boolean isValid = TelegramAuthService.verifyInitData(initData);
+
+        if (!isValid) {
+            return ResponseEntity.status(401).body("Invalid initData");
+        }
+
+        Long userId = TelegramAuthService.extractUserId(initData);
+        if (userId == null) {
+            return ResponseEntity.badRequest().body("User ID not found");
+        }
+
+        Optional<Player> optionalPlayer = playerService.findById(userId);
+
+        if (optionalPlayer.isPresent()) {
+            ControllerPlayerDTO playerDTO = playerService.playerToControllerPlayerDTO(optionalPlayer.get());
+            return ResponseEntity.ok(playerDTO);
+        } else {
+            return ResponseEntity.status(404).body("User not found");
+        }
+    }
 
     @GetMapping("/{playerId}")
     public ResponseEntity<ControllerPlayerDTO> getByPlayerId(@PathVariable Long playerId) {
