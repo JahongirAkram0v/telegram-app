@@ -1,5 +1,6 @@
 package com.example.telegram_app.service;
 
+import com.example.telegram_app.model.Group;
 import com.example.telegram_app.model.Player;
 import com.example.telegram_app.model.dto.ControllerPlayerDTO;
 import com.example.telegram_app.model.dto.ServerPlayerDTO;
@@ -21,6 +22,10 @@ public class PlayerService {
 
     public Optional<Player> findById(Long chatId) {
         return playerRepo.findById(chatId);
+    }
+
+    public Optional<Group> findGroupByChatId(Long chatId) {
+        return playerRepo.findGroupByChatId(chatId);
     }
 
     public ControllerPlayerDTO playerToControllerPlayerDTO(Player player) {

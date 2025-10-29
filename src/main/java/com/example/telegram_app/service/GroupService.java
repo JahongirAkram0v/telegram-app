@@ -31,9 +31,11 @@ public class GroupService {
         return groupRepo.existsById(groupId);
     }
 
-    public GroupDTO groupToGroupDTO(Group group) {
+    public GroupDTO groupToGroupDTO(Group group, Long currentPlayerId) {
+        System.out.println(group.getGroupId());
         return GroupDTO.builder()
                 .groupId(group.getGroupId())
+                .currentPlayerId(currentPlayerId)
                 .groupState(group.getGroupState())
                 .playerDTOs(group.getPlayers().stream()
                         .map(player -> PlayerDTO.builder()
@@ -44,9 +46,13 @@ public class GroupService {
                 .build();
     }
 
-    public GroupDTO updateGroupDTO(Long groupId) {
-        return groupRepo.findByIdWithPlayers(groupId)
-                .map(this::groupToGroupDTO)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+    public GroupDTO updateGroupDTO(Long groupId, Long currentPlayerId) {
+
+        Optional<Group> optionalGroup = groupRepo.findByIdWithPlayers(groupId);
+        if (optionalGroup.isEmpty()) {
+            throw new IllegalArgumentException("Group not found");
+        }
+
+        return groupToGroupDTO(optionalGroup.get(), currentPlayerId);
     }
 }

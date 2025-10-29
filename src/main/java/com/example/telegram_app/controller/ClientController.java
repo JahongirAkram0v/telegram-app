@@ -39,7 +39,7 @@ public class ClientController {
 
         messagingTemplate.convertAndSend(
                 "/topic/room/" + serverPlayerDTO.getGroupId(),
-                groupService.updateGroupDTO(serverPlayerDTO.getGroupId())
+                groupService.updateGroupDTO(serverPlayerDTO.getGroupId(), serverPlayerDTO.getChatId())
         );
     }
 

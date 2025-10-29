@@ -13,6 +13,7 @@ import java.util.List;
 public class GroupDTO {
 
     private Long groupId;
+    private Long currentPlayerId;
     private GroupState groupState;
 
     private List<PlayerDTO> playerDTOs;
